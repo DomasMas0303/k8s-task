@@ -11,6 +11,7 @@ kind: Secret
 metadata:
   name: mongo
 type: Opaque
+data:
 
 ---
 apiVersion: v1
@@ -45,6 +46,7 @@ spec:
       containers:
       - name: application
         image: docker.io/domasm97/domasm:dmasevicius_application
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
         envFrom:
@@ -61,12 +63,14 @@ spec:
           httpGet:
             path: /healthz
             port: 5000
+          initialDelaySeconds: 10 
+          timeoutSeconds: 5
         readinessProbe:
           httpGet:
             path: /healthx
             port: 5000
-          initialDelaySeconds: 10  
-          timeoutSeconds: 5 
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
       initContainers:
       - name: wait-for-mongo
         image: busybox
@@ -148,7 +152,7 @@ kind: Ingress
 metadata:
   name: nginx
   annotations:
-    spec.ingressClassName: nginx
+    kubernetes.io/ingress.class: nginx
 spec:
   rules:
   - host: dmasevicius.application.com
