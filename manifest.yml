@@ -1,1 +1,163 @@
-# Add all your manifests here
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: docker-credentials
+type: kubernetes.io/dockerconfigjson
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mongo
+type: Opaque
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: application
+data:
+  MONGO_HOST: mongo
+  MONGO_PORT: "27017"
+  BG_COLOR: teal
+  FAIL_FLAG: "false"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: application
+  labels:
+    app: application
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: application
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: application
+    spec:
+      containers:
+      - name: application
+        image: docker.io/domasm97/domasm:dmasevicius_application
+        ports:
+        - containerPort: 5000
+        envFrom:
+        - configMapRef:
+            name: application
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 200m
+            memory: 64Mi
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 5000
+        readinessProbe:
+          httpGet:
+            path: /healthx
+            port: 5000
+          initialDelaySeconds: 10  
+          timeoutSeconds: 5 
+      initContainers:
+      - name: wait-for-mongo
+        image: busybox
+        command: ['sh', '-c', 'until nc -z mongo 27017; do echo waiting for mongo; sleep 2; done;']
+      imagePullSecrets:
+      - name: docker-credentials
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: application
+spec:
+  selector:
+    app: application
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo
+  labels:
+    app: mongo
+spec:
+  serviceName: "mongo"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+      - name: mongo
+        image: mongo
+        ports:
+        - containerPort: 27017
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 200m
+            memory: 128Mi
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongo
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongo
+              key: password
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+spec:
+  selector:
+    app: mongo
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx
+  annotations:
+    spec.ingressClassName: nginx
+spec:
+  rules:
+  - host: dmasevicius.application.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: application
+            port: 
+              number: 80
