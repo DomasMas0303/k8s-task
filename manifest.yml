@@ -54,10 +54,10 @@ spec:
             name: application
         resources:
           limits:
-            cpu: 0.5
+            cpu: "0.5"
             memory: 128Mi
           requests:
-            cpu: 0.2
+            cpu: "0.2"
             memory: 64Mi
         livenessProbe:
           httpGet:
@@ -116,10 +116,10 @@ spec:
         - containerPort: 27017
         resources:
           limits:
-            cpu: 0.5
+            cpu: "0.5"
             memory: 256Mi
           requests:
-            cpu: 0.2
+            cpu: "0.2"
             memory: 128Mi
         env:
         - name: MONGO_INITDB_ROOT_USERNAME
