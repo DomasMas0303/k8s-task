@@ -1,19 +1,3 @@
-# DevOps BootCamp: Kubernetes Practical Task
-
-We are glad to see you here!
-
-During this course you will become familiar with a lot of tools and technologies. We would like you to apply this knowledge in practice, otherwise it would be boring. There is a task for you, which you can do along with stydying materials from this course. So, without further adieu, let's begin this task!
-
-**Be aware:**
-Don't make any changes not in **manifest.yml** file. It can break test logic.
-
-# Description
-
-You need to build the app's container images and deploy them to Kubernetes.
-
-## Requirements
-
-- Installed [jq utility](https://stedolan.github.io/jq/download/) 
 
 ## Application Description
 
